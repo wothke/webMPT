@@ -58,8 +58,8 @@
 	left: 265px;
 	z-index:1;
 
-	-webkit-transform: translateX(-250px) translateY(-250px) translateZ(0px) rotateX(-40deg) rotateY(45deg);
-	-moz-transform: translateX(-250px) translateY(-250px) translateZ(0px) rotateX(-40deg) rotateY(45deg);  
+	-webkit-transform: translateX(-250px) translateY(-250px) translateZ(0px) rotateX(-30deg) rotateY(45deg);
+	-moz-transform: translateX(-250px) translateY(-250px) translateZ(0px) rotateX(-30deg) rotateY(45deg);  
 }
 
 #moz-reflect-spectrum:after {
