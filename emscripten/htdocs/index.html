@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<!--
+ webMPT: HTML5 Audio/JavaScript port of libopenmpt 0.3.7.
+
+ Credits:
+  * libopenmpt https://lib.openmpt.org/libopenmpt/
+  * The visualization used on this page was strongly "inspired" by this demo:
+    http://html5-demos.appspot.com/static/webaudio/createMediaSourceElement.html
+
+ Copyright:
+	
+  The OpenMPT code is licensed under the BSD license.
+
+  Copyright (c) 2004-2018, OpenMPT contributors
+  Copyright (c) 1997-2003, Olivier Lapicque
+  All rights reserved.
+-->
+<meta http-equiv="X-UA-Compatible" content="chrome=1" />
+<title>WebMPT - a Open ModPlug Tracker music player</title>
+
+<meta name="description" content="Experimental JavaScript version of libopenmpt; it supports formats: .669, .amf, .amf, .ams, .ams, .dbm, .digi, .dmf, .dsm, .dtm, .far, .gdm, .ice, .imf, 
+.it, .j2b, .m15, .mdl, .med, .mmcmp, .mms, .mo3, .mod, .mptm, .mt2, .mtm, .nst, .okt, .plm, .ppm, .psm, .pt36, .ptm, 
+.s3m, .sfx, .sfx2, .st26, .stk, .stm, .stp, .ult, .umx, .wow, .xm, .xpk">
+<meta name="author" content="Juergen Wothke">
+<meta name="keywords" content="Web Audio API, HTML5, JavaScript, Open ModPlug Tracker">
+
+<link href="stdlib/font.css" rel="stylesheet" type="text/css">
+<link href="stdlib/common.css" rel="stylesheet" type="text/css">
+<link href="add_on.css" rel="stylesheet" type="text/css">
+
+<link rel="image_src" href="screenshot.gif" />
+<meta property="og:image" content="http://www.wothke.ch/webMPT/screenshot.gif" />
+
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+<link type="image/x-icon" href="favicon.ico" />
+
+<script type="text/javascript" src="stdlib/jquery1.11.min.js"></script>
+<script type="text/javascript" src="stdlib/jquery.details.min.js"></script>
+<script type="text/javascript" src="stdlib/scriptprocessor_player.min.js"></script>
+
+<script>window.openDetails=false;</script>
+<script type="text/javascript" src="stdlib/mini_display.js"></script>
+<script type="text/javascript" src="stdlib/mini_controls.js"></script>
+
+<script type="text/javascript" src="backend_mpt.js"></script>
+<script>
+var playerControls;
+var	songDisplay;
+	
+// configure what music infos to display in SongDisplay
+// configure what music infos to display in SongDisplay
+MPTDisplayAccessor = (function(){ var $this = function (doGetSongInfo) {
+		$this.base.call(this, doGetSongInfo);
+	}; 
+	extend(DisplayAccessor, $this, {
+		getDisplayTitle: function() 	{ return "webMPT";},
+		getDisplaySubtitle: function() 	{ return "more tracker music";},
+		getDisplayLine1: function() { return this.getSongInfo().title + 
+												(!this.getSongInfo().artist.length ? "" : (" ("+this.getSongInfo().artist+")"));
+									},
+		getDisplayLine2: function() { return this.getSongInfo().tracker; },
+		getDisplayLine3: function() { return ""; }
+	});	return $this; })();
+		
+// link player events to "controls" and "display"
+function doOnTrackEnd(){
+	if (playerControls) playerControls.playNextSong();  
+}
+function doOnTrackReadyToPlay(){ 	
+	ScriptNodePlayer.getInstance().play();
+	songDisplay.redrawSongInfo();
+}
+function doOnPlayerReady() {
+	if (playerControls) playerControls.playNextSong();
+}
+
+function init() {
+	// --------------------------- music player -----------------------
+	var basePath= '';		// not needed here
+	ScriptNodePlayer.createInstance(new MPTBackendAdapter(), basePath, [], true, doOnPlayerReady,
+										doOnTrackReadyToPlay, doOnTrackEnd);
+		
+	// --------------------------- UI - basic player controls --------------
+	var songs = [
+		"/modland/proxy.php?mod=Oktalyzer/Knackosoft/4th exam.8.okta",
+		"/modland/proxy.php?mod=Protracker/Mahoney/amegas.mod",
+		"/modland/proxy.php?mod=Screamtracker 3/Abaddon/bleu.s3m",
+		"/modland/proxy.php?mod=Impulsetracker/Chris Hatfield/sd2 far thunder.it",
+		"/modland/proxy.php?mod=Mad Tracker 2/Morphine/no more sleep.mt2",
+		"/modland/proxy.php?mod=Disorder Tracker 2/Statix/calm.plm",
+		"/modland/proxy.php?mod=Digital Sound Interface Kit RIFF/Boomer/peace or annihilation.dsm",
+		"/modland/proxy.php?mod=X-Tracker/Vivid/the balance.dmf",
+		"/modland/proxy.php?mod=Velvet Studio/Demuc/vib-e'n'v.ams",
+		"/modland/proxy.php?mod=Protracker IFF/Thunder/cosmos.ptm",
+	];
+	playerControls= new BasicPlayerControls(songs, true, false,
+				(function(someSong) {
+						var options= {};
+						return [someSong, options];
+					})
+				);
+
+	songDisplay= new SongDisplay(new MPTDisplayAccessor((function(){return playerControls.getSongInfo();})), 
+								[0xd60000,0xd7d7d7,0xd7d7d7,0x202020], 1, 1, (function(){playerControls.animate()}));
+
+	playerControls.playNextSong();
+}
+</script>
+<script type="text/javascript" src="stdlib/analytics.js"></script>
+</head>
+
+<body onload="init();">
+<div class="tooltip" id="tooltip" alt= "This is a hobby project, but it costs not only time to regularily maintain this site but also money to pay for the internet service provider (etc). If you want to keep this site up and running.. or if you just like my work (see https://jwothke.wordpress.com/) and you'd like to see more of it in the future, please make a contribution. Thank you!"></div>
+
+<details>
+  <summary>What's this?</summary>
+  <div>
+  <p>WebMPT: Experimental JavaScript/HTML5 version of <a href="https://lib.openmpt.org/libopenmpt/" target="_blank">libopenmpt</a> a 
+  player for various tracker formats. This page uses WebAssembly and you'll need a reasonably recent browser that supports this
+  technology.</p>
+ 
+  <p>Bring your own files by dropping them onto the below logo. Respective files can be found for example on 
+  <a href="https://ftp.modland.com/pub/modules/" target="_blank">modland.com</a>.</p>
+ 
+  <p>2018 by Juergen Wothke  (The source code can be found <a target="_blank" href="https://github.com/wothke/">here</a>.)</p>
+   
+  <p>This page does not use any plugins but is based exclusively on the WebAudio API. The audio samples here 
+  are completely calculated within JavaScript by running the libopenmpt emulator logic.</p>
+ 
+  <p>Please use the below controls to navigate between the songs that you have dropped on the player:
+  <span id="controls"></span>
+ </div>
+</details>
+<aside></aside>
+<section>
+  <div id="logo">
+		<!-- in new Chrome the SHIT reflections disapear dependig on the canvas height.. what a fucking joke -->
+		<div id="moz-reflect-logo"><canvas  id="logoCanvas"  width="270" height="100"></canvas></div>	
+  </div>
+  
+  <div id="spectrum" >
+		<!-- use "hight" greater than 80 and the fucking reflection is gone.. FUCK YOU IDIOTS -->
+		<div id="moz-reflect-spectrum"><canvas id="spectrumCanvas" width="800" height="80"></canvas></div>
+  </div>
+  <div id="drop" class="drop"><img src="mpt.gif"/></div><!--see BasicPlayerControls-->
+</section>
+</body>
+</html>
