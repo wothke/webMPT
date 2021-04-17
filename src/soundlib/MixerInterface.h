@@ -55,7 +55,11 @@ struct NoInterpolation
 
 // Other interpolation algorithms depend on the input format type (integer / float) and can thus be found in FloatMixer.h and IntMixer.h
 
-
+#ifdef EMSCRIPTEN
+// from Sndfile.h
+extern mixsample_t* ScopeBuffers[MAX_BASECHANNELS];
+extern uint16 ScopeBufferOffset;
+#endif
 //////////////////////////////////////////////////////////////////////////
 // Main sample render loop template
 
@@ -88,9 +92,13 @@ static void SampleLoop(ModChannel &chn, const CResampler &resampler, typename Tr
 		typename Traits::outbuf_t outSample;
 		interpolate(outSample, inSample + smpPos.GetInt() * Traits::numChannelsIn, smpPos.GetFract());
 		filter(outSample, c);
+		
 		mix(outSample, c, outBuffer);
 		outBuffer += Traits::numChannelsOut;
 
+#ifdef EMSCRIPTEN
+		ScopeBuffers[chn.m_Idx][ScopeBufferOffset++]= outSample[0];	// only create mono channel
+#endif
 		smpPos += increment;
 	}
 

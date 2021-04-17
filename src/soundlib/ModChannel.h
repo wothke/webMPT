@@ -132,6 +132,9 @@ struct ModChannel
 	uint16 m_RowPlugParam;
 	PLUGINDEX m_RowPlug;
 
+#ifdef EMSCRIPTEN	
+	uint8 m_Idx;
+#endif
 	void ClearRowCmd() { rowCommand = ModCommand::Empty(); }
 
 	// Get a reference to a specific envelope of this channel

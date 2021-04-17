@@ -16,6 +16,9 @@ OPENMPT_NAMESPACE_BEGIN
 
 void ModChannel::Reset(ResetFlags resetMask, const CSoundFile &sndFile, CHANNELINDEX sourceChannel)
 {
+#ifdef EMSCRIPTEN
+	m_Idx= 	sourceChannel;
+#endif
 	if(resetMask & resetSetPosBasic)
 	{
 		nNote = nNewNote = NOTE_NONE;

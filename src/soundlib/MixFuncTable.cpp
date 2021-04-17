@@ -57,7 +57,7 @@ namespace MixFuncTable
 	BuildMixFuncTableFilter(resampling, NoFilter), \
 	BuildMixFuncTableFilter(resampling, ResonantFilter)
 
-const MixFuncInterface Functions[6 * 16] =
+const MixFuncInterface Functions[6 * 16] =			// 6*2*2*4 - see above defines..
 {
 	BuildMixFuncTable(NoInterpolation),			// No SRC
 	BuildMixFuncTable(LinearInterpolation),		// Linear SRC

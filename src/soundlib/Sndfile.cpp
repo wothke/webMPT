@@ -67,6 +67,24 @@ mpt::ustring FileHistory::AsISO8601() const
 const NoteName *CSoundFile::m_NoteNames = NoteNamesFlat;
 #endif
 
+#ifdef EMSCRIPTEN
+int32* ScopeBuffers[MAX_BASECHANNELS] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
+uint16 ScopeBufferOffset= 0;
+uint8 ScopeUsedChannels= 0;
+
+extern "C" int32** getScopeBuffers() {
+	return ScopeBuffers;
+}
+
+extern "C" void setUsedScopeChannels(int n) {
+	ScopeUsedChannels= n;
+}
+extern "C" int getUsedScopeChannels() {
+	return ScopeUsedChannels;
+}
+
+#endif
+
 CSoundFile::CSoundFile() :
 #ifndef MODPLUG_TRACKER
 	m_NoteNames(NoteNamesSharp),
@@ -87,6 +105,18 @@ CSoundFile::CSoundFile() :
 	MemsetZero(MixSoundBuffer);
 	MemsetZero(MixRearBuffer);
 	MemsetZero(MixFloatBuffer);
+#ifdef EMSCRIPTEN	
+	// alloc once and reuse..
+	if (ScopeBuffers[0] == 0) {
+		for (int i= 0; i<MAX_BASECHANNELS; i++) {
+			if (ScopeBuffers[i] != 0) {		// should be dead code
+				delete [] (ScopeBuffers[i]);
+				ScopeBuffers[i]= 0;
+			}			
+			ScopeBuffers[i]= new int32[MIXBUFFERSIZE];	// note: only valid while using int mixer
+		}
+	}
+#endif
 	gnDryLOfsVol = 0;
 	gnDryROfsVol = 0;
 	m_nType = MOD_TYPE_NONE;

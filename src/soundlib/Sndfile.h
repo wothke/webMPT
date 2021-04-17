@@ -254,6 +254,12 @@ struct TimingInfo
 	}
 };
 
+#ifdef EMSCRIPTEN
+// don't want to touch existing MPT APIs - to ease the pain of future code merges - so
+// these are added as globals.
+extern int32* ScopeBuffers[MAX_BASECHANNELS];	// only use mono
+extern uint16 ScopeBufferOffset;
+#endif
 
 class IAudioReadTarget
 {
@@ -321,6 +327,7 @@ private:
 	// Interleaved Front Mix Buffer (Also room for interleaved rear mix)
 	mixsample_t MixSoundBuffer[MIXBUFFERSIZE * 4];
 	mixsample_t MixRearBuffer[MIXBUFFERSIZE * 2];
+	
 	// Non-interleaved plugin processing buffer
 	float MixFloatBuffer[2][MIXBUFFERSIZE];
 	mixsample_t gnDryLOfsVol;

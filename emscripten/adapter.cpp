@@ -15,34 +15,39 @@
 #include <exception>
 #include <iostream>
 #include <fstream>
-
+/*
 #ifdef EMSCRIPTEN
 #define EMSCRIPTEN_KEEPALIVE __attribute__((used))
 #else
 #define EMSCRIPTEN_KEEPALIVE
 #endif
+*/
 
-#define BUF_SIZE	1024
+#define MIXBUFFERSIZE 512	// MPT's mixbuffer size (use same here to avoid copying "scope" buffers.)
+
 #define TEXT_MAX	255
 #define NUM_MAX	15
 
 #define CHANNELS 2				
 #define BYTES_PER_SAMPLE 2
-#define SAMPLE_BUF_SIZE	1024
+#define SAMPLE_BUF_SIZE	MIXBUFFERSIZE
 #define SAMPLE_RATE	44100
 
 #define t_int16   signed short
 t_int16 sample_buffer[SAMPLE_BUF_SIZE * CHANNELS];
 int samples_available= 0;
 
-const char* info_texts[5];
+const char* info_texts[6];
 
 char title_str[TEXT_MAX];
 char artist_str[TEXT_MAX];
 char type_str[TEXT_MAX];
 char msg_str[TEXT_MAX];
 char tracker_str[TEXT_MAX];
+char tracks_str[TEXT_MAX];
 
+extern "C" int32_t** getScopeBuffers(); 	// hack: see Sndfile.cpp
+extern "C" int getUsedScopeChannels();
 
 #include "../src/libopenmpt/libopenmpt.h"
 #include "../src/libopenmpt/libopenmpt.hpp"
@@ -55,6 +60,7 @@ struct StaticBlock {
 		info_texts[2]= type_str;
 		info_texts[3]= msg_str;
 		info_texts[4]= tracker_str;
+		info_texts[5]= tracks_str;
     }
 };
 	
@@ -102,6 +108,7 @@ void update_song_info() {
 		snprintf(type_str, TEXT_MAX, "%s", openmpt_module_get_metadata( module, "type_long" ));
 		snprintf(msg_str, TEXT_MAX, "%s", openmpt_module_get_metadata( module, "message" ));
 		snprintf(tracker_str, TEXT_MAX, "%s", openmpt_module_get_metadata( module, "tracker" ));		
+		snprintf(tracks_str, TEXT_MAX, "%d", openmpt_module_get_num_subsongs( module ));		
 	}
 }
 
@@ -184,3 +191,11 @@ extern "C" int EMSCRIPTEN_KEEPALIVE emu_get_max_position() {
 	return module ? openmpt_module_get_duration_seconds( module )*1000 : -1;	//ms
 }
 
+extern "C" int emu_number_trace_streams() __attribute__((noinline));
+extern "C" int EMSCRIPTEN_KEEPALIVE emu_number_trace_streams() {
+	return getUsedScopeChannels();	// <=MAX_BASECHANNELS
+}
+extern "C" const char** emu_trace_streams() __attribute__((noinline));
+extern "C" const char** EMSCRIPTEN_KEEPALIVE emu_trace_streams() {
+	return (const char**)(module ? getScopeBuffers() : 0);	// ugly cast to make emscripten happy
+}

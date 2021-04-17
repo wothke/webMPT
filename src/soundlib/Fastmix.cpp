@@ -270,10 +270,16 @@ struct MixLoopState
 	}
 };
 
+#ifdef EMSCRIPTEN
+extern "C" void setUsedScopeChannels(int n);
+extern mixsample_t* ScopeBuffers[MAX_BASECHANNELS];
+extern uint16 ScopeBufferOffset;
+
+#endif	
 
 // Render count * number of channels samples
 void CSoundFile::CreateStereoMix(int count)
-{
+{	
 	mixsample_t *pOfsL, *pOfsR;
 
 	if (!count) return;
@@ -302,6 +308,9 @@ void CSoundFile::CreateStereoMix(int count)
 #endif
 
 		mixsample_t *pbuffer = MixSoundBuffer;
+#ifdef EMSCRIPTEN
+		ScopeBufferOffset= 0;	// in step with pbuffer
+#endif
 #ifndef NO_REVERB
 		if(((m_MixerSettings.DSPMask & SNDDSP_REVERB) && !chn.dwFlags[CHN_NOREVERB]) || chn.dwFlags[CHN_REVERB])
 		{
@@ -372,6 +381,10 @@ void CSoundFile::CreateStereoMix(int count)
 				chn.position += chn.increment * nSmpCount;
 				chn.nROfs = chn.nLOfs = 0;
 				pbuffer += nSmpCount * 2;
+#ifdef EMSCRIPTEN
+				ScopeBufferOffset += nSmpCount;
+				// XXXX FIXME better clear scope buffer? 
+#endif
 				naddmix = 0;
 			} else
 			{
@@ -391,6 +404,9 @@ void CSoundFile::CreateStereoMix(int count)
 				chn.nROfs += *(pbufmax-2);
 				chn.nLOfs += *(pbufmax-1);
 				pbuffer = pbufmax;
+#ifdef EMSCRIPTEN
+				ScopeBufferOffset += nSmpCount;
+#endif
 				naddmix = 1;
 			}
 			nsamples -= nSmpCount;
@@ -452,9 +468,24 @@ void CSoundFile::CreateStereoMix(int count)
 			m_MixPlugins[nMixPlugin - 1].pMixPlugin->ResetSilence();
 		}
 #endif // NO_PLUGINS
-	}
+	}	// channel loop end
 	m_nMixStat = std::max<CHANNELINDEX>(m_nMixStat, nchmixed);
+#ifdef EMSCRIPTEN
+	setUsedScopeChannels(m_nChannels);
+	
+	for (int i= m_nMixStat; i<m_nChannels; i++) {
+		int o= ScopeBufferOffset;
+		for (int j= 0; j<count; j++) {
+				ScopeBuffers[i][o++]= 0; // clear unused channels
+		}
+	}
+	
+//	setUsedScopeChannels(m_nMixChannels);
+//	setUsedScopeChannels(m_nMixStat);
+#endif	
 }
+
+
 
 
 void CSoundFile::ProcessPlugins(uint32 nCount)
